@@ -24,6 +24,27 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerObservers();
+        $this->registerGates();
+    }
+
+    /**
+     * Register model observers
+     */
+    protected function registerObservers(): void
+    {
+        \App\Modules\Accounting\Models\Invoice::observe(\App\Observers\Accounting\InvoiceObserver::class);
+        \App\Modules\Accounting\Models\Payment::observe(\App\Observers\Accounting\PaymentObserver::class);
+    }
+
+    /**
+     * Register authorization gates
+     */
+    protected function registerGates(): void
+    {
+        \Illuminate\Support\Facades\Gate::define('super-admin', function ($user) {
+            return $user->isSuperAdmin();
+        });
     }
 
     /**

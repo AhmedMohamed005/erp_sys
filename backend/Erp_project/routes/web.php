@@ -15,7 +15,13 @@ Route::get('dashboard', function () {
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Core module routes
+require __DIR__.'/core.php';
+
 // Accounting module routes with module access middleware
+require __DIR__.'/accounting.php';
+
+// Legacy accounting routes (can be removed if not needed)
 Route::middleware(['auth', 'module.access:accounting'])->group(function () {
     Route::prefix('accounting')->group(function () {
         Route::get('/accounts', [AccountController::class, 'index'])->name('accounting.accounts.index');
