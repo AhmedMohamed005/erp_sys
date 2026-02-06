@@ -180,4 +180,81 @@ class SuperAdminController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * List all available modules in the system
+     */
+    public function listModules(Request $request)
+    {
+        $modules = Module::all();
+
+        return response()->json([
+            'modules' => $modules
+        ]);
+    }
+
+    /**
+     * Get active modules for the authenticated user's company
+     */
+    public function myModules(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->company_id) {
+            return response()->json([
+                'message' => 'No company assigned to user'
+            ], 403);
+        }
+
+        $company = Company::with(['modules'])->findOrFail($user->company_id);
+
+        $activeModules = $company->modules->where('pivot.status', 'active')->values();
+        $inactiveModules = $company->modules->where('pivot.status', 'inactive')->values();
+
+        return response()->json([
+            'company_id' => $company->id,
+            'company_name' => $company->name,
+            'active_modules' => $activeModules,
+            'inactive_modules' => $inactiveModules,
+            'total_active' => $activeModules->count(),
+            'total_inactive' => $inactiveModules->count(),
+        ]);
+    }
+
+    /**
+     * Check if a specific module is active for the user's company
+     */
+    public function checkModuleAccess(Request $request, $moduleKey)
+    {
+        $user = $request->user();
+
+        if (!$user->company_id) {
+            return response()->json([
+                'has_access' => false,
+                'message' => 'No company assigned to user'
+            ]);
+        }
+
+        $module = Module::where('key', $moduleKey)->first();
+
+        if (!$module) {
+            return response()->json([
+                'has_access' => false,
+                'message' => 'Module not found'
+            ], 404);
+        }
+
+        $companyModule = $user->company->modules()
+            ->where('modules.id', $module->id)
+            ->first();
+
+        $hasAccess = $companyModule && $companyModule->pivot->status === 'active';
+
+        return response()->json([
+            'module_key' => $moduleKey,
+            'module_name' => $module->name,
+            'has_access' => $hasAccess,
+            'status' => $companyModule ? $companyModule->pivot->status : 'not_assigned',
+        ]);
+    }
 }

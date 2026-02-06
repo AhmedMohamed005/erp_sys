@@ -19,14 +19,18 @@ Route::middleware(['auth:sanctum', 'module.access:accounting'])->group(function 
     // Accounts
     Route::get('/accounting/accounts', [AccountingApiController::class, 'accounts']);
     Route::post('/accounting/accounts', [AccountingApiController::class, 'createAccount']);
+    Route::get('/accounting/accounts/{accountId}/ledger', [AccountingApiController::class, 'accountLedger']);
 
     // Journal Entries
     Route::get('/accounting/journal-entries', [AccountingApiController::class, 'journalEntries']);
+    Route::get('/accounting/journal-entries/{id}', [AccountingApiController::class, 'showJournalEntry']);
     Route::post('/accounting/journal-entries', [AccountingApiController::class, 'createJournalEntry']);
 
     // Invoices
     Route::get('/accounting/invoices', [AccountingApiController::class, 'invoices']);
+    Route::get('/accounting/invoices/{id}', [AccountingApiController::class, 'showInvoice']);
     Route::post('/accounting/invoices', [AccountingApiController::class, 'createInvoice']);
+    Route::patch('/accounting/invoices/{id}/status', [AccountingApiController::class, 'updateInvoiceStatus']);
 
     // Payments
     Route::get('/accounting/payments', [AccountingApiController::class, 'payments']);
@@ -34,4 +38,6 @@ Route::middleware(['auth:sanctum', 'module.access:accounting'])->group(function 
 
     // Reports
     Route::get('/accounting/trial-balance', [AccountingApiController::class, 'trialBalance']);
+    Route::get('/accounting/income-statement', [AccountingApiController::class, 'incomeStatement']);
+    Route::get('/accounting/balance-sheet', [AccountingApiController::class, 'balanceSheet']);
 });

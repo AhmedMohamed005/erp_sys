@@ -22,10 +22,13 @@ Route::middleware(['auth:sanctum', 'can:super-admin'])->group(function () {
 
     // Module management
     Route::post('/modules/toggle', [SuperAdminController::class, 'toggleModule']);
+    Route::get('/modules', [SuperAdminController::class, 'listModules']); // List all available modules
 });
 
 // Authenticated user routes - accessible to all authenticated users
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/companies/{id}', [SuperAdminController::class, 'showCompany']); // Get specific company (own or any if super admin)
     Route::get('/my-company', [SuperAdminController::class, 'myCompany']); // Get authenticated user's company
+    Route::get('/my-modules', [SuperAdminController::class, 'myModules']); // Get user's company active modules
+    Route::get('/check-module/{moduleKey}', [SuperAdminController::class, 'checkModuleAccess']); // Check specific module access
 });

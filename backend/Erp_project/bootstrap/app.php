@@ -14,7 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
 
         // main api
-        api: [__DIR__.'/../routes/api.php', __DIR__.'/../routes/super_admin_api.php', __DIR__.'/../routes/accounting_api.php'],
+        api: [
+            __DIR__.'/../routes/api.php',
+            __DIR__.'/../routes/super_admin_api.php',
+            __DIR__.'/../routes/accounting_api.php',
+            __DIR__.'/../routes/hr_api.php',
+            __DIR__.'/../routes/inventory_api.php',
+        ],
 
         // extra api modules
         then: function () {

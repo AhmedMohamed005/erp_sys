@@ -231,4 +231,240 @@ class AccountingApiController extends Controller
 
         return response()->json($trialBalance);
     }
+
+    /**
+     * Get account ledger (all journal lines for a specific account)
+     */
+    public function accountLedger(Request $request, $accountId)
+    {
+        $account = Account::findOrFail($accountId);
+
+        $validated = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $query = JournalEntryLine::with(['journalEntry'])
+            ->where('account_id', $accountId)
+            ->join('journal_entries', 'journal_entry_lines.entry_id', '=', 'journal_entries.id')
+            ->select('journal_entry_lines.*', 'journal_entries.date', 'journal_entries.description as entry_description', 'journal_entries.reference_number')
+            ->orderBy('journal_entries.date', 'asc');
+
+        if (!empty($validated['start_date'])) {
+            $query->where('journal_entries.date', '>=', $validated['start_date']);
+        }
+
+        if (!empty($validated['end_date'])) {
+            $query->where('journal_entries.date', '<=', $validated['end_date']);
+        }
+
+        $lines = $query->get();
+
+        $totalDebit = $lines->sum('debit');
+        $totalCredit = $lines->sum('credit');
+
+        return response()->json([
+            'account' => $account,
+            'ledger' => $lines,
+            'totals' => [
+                'debit' => $totalDebit,
+                'credit' => $totalCredit,
+                'balance' => $totalDebit - $totalCredit,
+            ],
+        ]);
+    }
+
+    /**
+     * Get a single invoice with its related journal entry and payments
+     */
+    public function showInvoice(Request $request, $id)
+    {
+        $invoice = Invoice::with(['journalEntry.lines.account', 'payments'])->findOrFail($id);
+
+        return response()->json([
+            'invoice' => $invoice,
+            'has_journal_entry' => $invoice->journalEntry !== null,
+            'total_paid' => $invoice->payments->sum('amount'),
+            'remaining_balance' => $invoice->total - $invoice->payments->sum('amount'),
+        ]);
+    }
+
+    /**
+     * Update invoice status (triggers automatic journal entry if status becomes 'sent')
+     */
+    public function updateInvoiceStatus(Request $request, $id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['draft', 'sent', 'paid', 'overdue', 'cancelled'])]
+        ]);
+
+        $invoice->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'invoice' => $invoice->fresh(['journalEntry.lines.account', 'payments']),
+            'message' => 'Invoice status updated successfully',
+            'journal_entry_created' => $invoice->journalEntry !== null,
+        ]);
+    }
+
+    /**
+     * Get a single journal entry with validation info
+     */
+    public function showJournalEntry(Request $request, $id)
+    {
+        $entry = JournalEntry::with(['lines.account'])->findOrFail($id);
+
+        return response()->json([
+            'journal_entry' => $entry,
+            'validation' => [
+                'total_debits' => $entry->total_debits,
+                'total_credits' => $entry->total_credits,
+                'is_balanced' => $entry->is_balanced,
+                'difference' => $entry->total_debits - $entry->total_credits,
+            ],
+        ]);
+    }
+
+    /**
+     * Get income statement (Revenue - Expenses)
+     */
+    public function incomeStatement(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $companyId = Auth::user()->company_id;
+        $startDate = $validated['start_date'] ?? null;
+        $endDate = $validated['end_date'] ?? null;
+
+        $query = JournalEntryLine::withoutGlobalScopes()
+            ->join('journal_entries', 'journal_entry_lines.entry_id', '=', 'journal_entries.id')
+            ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
+            ->where('journal_entries.company_id', $companyId)
+            ->whereIn('accounts.type', ['Revenue', 'Expense'])
+            ->select(
+                'accounts.id as account_id',
+                'accounts.code',
+                'accounts.name',
+                'accounts.type',
+                DB::raw('SUM(journal_entry_lines.debit) as total_debit'),
+                DB::raw('SUM(journal_entry_lines.credit) as total_credit')
+            )
+            ->groupBy('accounts.id', 'accounts.code', 'accounts.name', 'accounts.type');
+
+        if ($startDate) {
+            $query->where('journal_entries.date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->where('journal_entries.date', '<=', $endDate);
+        }
+
+        $results = $query->get();
+
+        $revenue = $results->where('type', 'Revenue')->map(function ($item) {
+            return [
+                'account_id' => $item->account_id,
+                'code' => $item->code,
+                'name' => $item->name,
+                'amount' => (float) $item->total_credit - (float) $item->total_debit,
+            ];
+        })->values();
+
+        $expenses = $results->where('type', 'Expense')->map(function ($item) {
+            return [
+                'account_id' => $item->account_id,
+                'code' => $item->code,
+                'name' => $item->name,
+                'amount' => (float) $item->total_debit - (float) $item->total_credit,
+            ];
+        })->values();
+
+        $totalRevenue = $revenue->sum('amount');
+        $totalExpenses = $expenses->sum('amount');
+
+        return response()->json([
+            'revenue' => $revenue,
+            'expenses' => $expenses,
+            'totals' => [
+                'total_revenue' => $totalRevenue,
+                'total_expenses' => $totalExpenses,
+                'net_income' => $totalRevenue - $totalExpenses,
+            ],
+            'period' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+        ]);
+    }
+
+    /**
+     * Get balance sheet (Assets = Liabilities + Equity)
+     */
+    public function balanceSheet(Request $request)
+    {
+        $validated = $request->validate([
+            'as_of_date' => 'nullable|date',
+        ]);
+
+        $companyId = Auth::user()->company_id;
+        $asOfDate = $validated['as_of_date'] ?? now()->toDateString();
+
+        $query = JournalEntryLine::withoutGlobalScopes()
+            ->join('journal_entries', 'journal_entry_lines.entry_id', '=', 'journal_entries.id')
+            ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
+            ->where('journal_entries.company_id', $companyId)
+            ->where('journal_entries.date', '<=', $asOfDate)
+            ->whereIn('accounts.type', ['Asset', 'Liability', 'Equity'])
+            ->select(
+                'accounts.id as account_id',
+                'accounts.code',
+                'accounts.name',
+                'accounts.type',
+                DB::raw('SUM(journal_entry_lines.debit) as total_debit'),
+                DB::raw('SUM(journal_entry_lines.credit) as total_credit')
+            )
+            ->groupBy('accounts.id', 'accounts.code', 'accounts.name', 'accounts.type');
+
+        $results = $query->get();
+
+        $mapAccount = function ($item) {
+            $balance = (float) $item->total_debit - (float) $item->total_credit;
+            if ($item->type !== 'Asset') {
+                $balance = -$balance; // Liabilities and Equity have credit balances
+            }
+            return [
+                'account_id' => $item->account_id,
+                'code' => $item->code,
+                'name' => $item->name,
+                'balance' => $balance,
+            ];
+        };
+
+        $assets = $results->where('type', 'Asset')->map($mapAccount)->values();
+        $liabilities = $results->where('type', 'Liability')->map($mapAccount)->values();
+        $equity = $results->where('type', 'Equity')->map($mapAccount)->values();
+
+        $totalAssets = $assets->sum('balance');
+        $totalLiabilities = $liabilities->sum('balance');
+        $totalEquity = $equity->sum('balance');
+
+        return response()->json([
+            'assets' => $assets,
+            'liabilities' => $liabilities,
+            'equity' => $equity,
+            'totals' => [
+                'total_assets' => $totalAssets,
+                'total_liabilities' => $totalLiabilities,
+                'total_equity' => $totalEquity,
+                'liabilities_plus_equity' => $totalLiabilities + $totalEquity,
+                'is_balanced' => round($totalAssets, 2) === round($totalLiabilities + $totalEquity, 2),
+            ],
+            'as_of_date' => $asOfDate,
+        ]);
+    }
 }
