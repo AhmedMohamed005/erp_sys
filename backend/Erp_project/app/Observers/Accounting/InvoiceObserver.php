@@ -16,8 +16,8 @@ class InvoiceObserver
      */
     public function created(Invoice $invoice): void
     {
-        // Only create journal entry if invoice is confirmed/posted
-        if ($invoice->status === 'posted' || $invoice->status === 'confirmed') {
+        // Only create journal entry if invoice is sent
+        if ($invoice->status === 'sent') {
             $this->createJournalEntry($invoice);
         }
     }
@@ -27,9 +27,8 @@ class InvoiceObserver
      */
     public function updated(Invoice $invoice): void
     {
-        // If status changed to posted/confirmed, create journal entry
-        if ($invoice->wasChanged('status') && 
-            ($invoice->status === 'posted' || $invoice->status === 'confirmed')) {
+        // If status changed to sent, create journal entry
+        if ($invoice->wasChanged('status') && $invoice->status === 'sent') {
             
             // Check if journal entry doesn't already exist
             $existingEntry = JournalEntry::where('source_type', Invoice::class)

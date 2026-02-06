@@ -12,9 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->softDeletes();
-            $table->unsignedBigInteger('deleted_by')->nullable();
-            $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
+            if (!Schema::hasColumn('users', 'deleted_at')) {
+                $table->softDeletes();
+            }
+            if (!Schema::hasColumn('users', 'deleted_by')) {
+                $table->unsignedBigInteger('deleted_by')->nullable();
+                $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
+            }
         });
     }
 

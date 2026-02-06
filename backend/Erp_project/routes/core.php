@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Core\CompanyRegistrationController;
+use App\Http\Controllers\Core\UserController;
 
 /**
  * Core Module Routes
@@ -20,8 +21,13 @@ Route::middleware(['auth'])->prefix('core')->name('core.')->group(function () {
         Route::patch('/{company}/modules/toggle', [CompanyRegistrationController::class, 'toggleModule'])->name('toggle-module');
     });
     
-    // Users management
+    // Users management (accessible to admins and super admins)
     Route::prefix('users')->name('users.')->group(function () {
-        // Add user management routes here
+        Route::get('/', [UserController::class, 'index'])->name('index'); // GET /core/users
+        Route::get('/{id}', [UserController::class, 'show'])->name('show'); // GET /core/users/{id}
+        Route::post('/', [UserController::class, 'store'])->name('store'); // POST /core/users
+        Route::put('/{id}', [UserController::class, 'update'])->name('update'); // PUT /core/users/{id}
+        Route::patch('/{id}', [UserController::class, 'update'])->name('update-patch'); // PATCH /core/users/{id}
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy'); // DELETE /core/users/{id}
     });
 });

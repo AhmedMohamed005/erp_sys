@@ -18,7 +18,7 @@ class TrialBalanceService
      */
     public function generate(int $companyId, ?string $startDate = null, ?string $endDate = null): array
     {
-        $query = JournalEntryLine::query()
+        $query = JournalEntryLine::withoutGlobalScopes()
             ->join('journal_entries', 'journal_entry_lines.entry_id', '=', 'journal_entries.id')
             ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
             ->where('journal_entries.company_id', $companyId)
