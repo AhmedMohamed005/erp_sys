@@ -43,7 +43,10 @@ if [ "$RUN_MIGRATIONS" = "1" ]; then
   php artisan migrate --force || true
 fi
 
-echo "🚀 Starting services..."
+# ---------- inject PORT into nginx config ----------
+PORT="${PORT:-8080}"
+sed -i "s/__PORT__/$PORT/g" /etc/nginx/http.d/default.conf
+echo "🚀 Starting services on port $PORT..."
 
 # ---------- hand off to supervisor ----------
 exec "$@"
