@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../services/api';
 import {
   Dashboard,
   AccountBalanceWallet,
@@ -156,8 +157,6 @@ const UserAccountingModule = () => {
     as_of_date: '2026-12-31'
   });
   const [groupedTrialBalance, setGroupedTrialBalance] = useState(false);
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch Accounts
   const fetchAccounts = async () => {

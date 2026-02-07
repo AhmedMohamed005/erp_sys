@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../services/api';
 import { 
   Dashboard, 
   Apartment, 
@@ -664,8 +665,6 @@ const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1106,8 +1105,6 @@ const SuperAdminDashboard = () => {
     admin_password: '',
     admin_password_confirmation: ''
   });
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchCompanies = async () => {
     try {

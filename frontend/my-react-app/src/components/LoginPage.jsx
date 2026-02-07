@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../services/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +12,6 @@ const LoginPage = () => {
   
   const navigate = useNavigate();
   const { login } = useAuth();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -24,6 +24,16 @@ export APP_DEBUG="${APP_DEBUG:-false}"
 export LOG_CHANNEL="${LOG_CHANNEL:-stderr}"
 export DB_CONNECTION="${DB_CONNECTION:-pgsql}"
 
+# Sanitize APP_URL — must be a valid URL (no spaces/parentheses)
+if [ -n "$APP_URL" ]; then
+  if echo "$APP_URL" | grep -qE ' |\(|\)'; then
+    echo "⚠️  APP_URL contains invalid characters — resetting to default"
+    export APP_URL="http://localhost:${PORT}"
+  fi
+else
+  export APP_URL="http://localhost:${PORT}"
+fi
+
 # Ensure .env file exists (Laravel requires it even if empty)
 touch .env
 
