@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// ── Health check (used by Railway / load-balancers) ──
+Route::get('/health', function () {
+    return response()->json([
+        'status'  => 'ok',
+        'time'    => now()->toIso8601String(),
+    ]);
+});
+
 // Load authentication routes
 require __DIR__.'/auth.php';
 
