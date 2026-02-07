@@ -2,11 +2,11 @@
 
 return [
 
-    'paths' => ['api/*'],
+    'paths' => ['*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5176'],
+    'allowed_origins' => ['*'],
 
     'allowed_headers' => ['*'],
 

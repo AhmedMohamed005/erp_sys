@@ -1,0 +1,10 @@
+# Railway config for Frontend service
+# Set this file's root to: frontend/my-react-app
+[build]
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

@@ -1,0 +1,10 @@
+# Railway config for Backend service
+# Set this file's root to: backend/Erp_project
+[build]
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

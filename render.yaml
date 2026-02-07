@@ -1,0 +1,64 @@
+# render.yaml  –  Render Blueprint (Infrastructure-as-Code)
+# Commit this to repo root. Then in Render dashboard:
+#   New → Blueprint → connect this repo
+# Render auto-provisions everything below.
+
+services:
+  # ─── Backend (Laravel) ───
+  - type: web
+    name: erp-backend
+    runtime: docker
+    dockerfilePath: ./backend/Erp_project/Dockerfile
+    dockerContext: ./backend/Erp_project
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: erp-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: erp-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: erp-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: erp-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: erp-db
+          property: password
+      - key: RUN_MIGRATIONS
+        value: "1"
+      - key: PORT
+        value: "8080"
+
+  # ─── Frontend (React SPA) ───
+  - type: web
+    name: erp-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/my-react-app/Dockerfile
+    dockerContext: ./frontend/my-react-app
+    buildArgs:
+      VITE_API_URL: https://erp-backend.onrender.com   # adjust after first deploy
+    envVars:
+      - key: PORT
+        value: "3000"
+
+# ─── Managed PostgreSQL ───
+databases:
+  - name: erp-db
+    plan: free          # or starter / standard
+    databaseName: erp
+    user: erp

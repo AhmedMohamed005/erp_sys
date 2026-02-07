@@ -1,0 +1,56 @@
+# ===========================================================
+# docker-compose.yml  –  local dev / testing
+# Production: deploy each image independently on Railway/Render
+# ===========================================================
+
+services:
+  # ───────── PostgreSQL (local only — use managed DB in prod) ─────────
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: erp
+      POSTGRES_USER: erp
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  # ───────── Backend (Nginx + PHP-FPM in one image) ─────────
+  backend:
+    build:
+      context: ./backend/Erp_project
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/Erp_project/.env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: erp
+      DB_USERNAME: erp
+      DB_PASSWORD: secret
+      RUN_MIGRATIONS: "1"
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  # ───────── Frontend (Vite build → Nginx SPA) ─────────
+  frontend:
+    build:
+      context: ./frontend/my-react-app
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+    environment:
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
