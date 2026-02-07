@@ -2,13 +2,11 @@
 
 return [
 
-    'paths' => ['*'],
+    'paths' => ['api/*'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => ['http://localhost:5176'],
-
-    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
@@ -16,6 +14,8 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false, // false for Bearer tokens (no cookies)
+    'supports_credentials' => false,
 
 ];
+
+
