@@ -1,0 +1,913 @@
+{
+  "info": {
+    "_postman_id": "7e09c6e1-d8c0-43ec-a5c2-4ea1ee7e2456",
+    "name": "ERP System - Complete API Collection",
+    "description": "Multi-Tenant ERP System API Collection\n\nModules:\n- Auth: User registration, login, logout\n- Company Registration: Self-service company setup\n- Super Admin: Company & module management\n- Module Access Control: Check module activation status\n- Users: User CRUD (scoped by company)\n- Accounting: Full double-entry accounting\n- HR (Planned): Human resources module\n- Inventory (Planned): Inventory management module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46291628"
+  },
+  "item": [
+    {
+      "name": "1. Auth",
+      "description": "Authentication endpoints for user registration, login, logout and profile",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "user"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Company Registration (Self-Service)",
+      "description": "Public company self-registration flow.\nCreates a new company with its first admin user and optionally activates modules.",
+      "item": [
+        {
+          "name": "Register New Company (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"company_name\": \"Acme Corp\",\n    \"admin_name\": \"Admin User\",\n    \"admin_email\": \"admin@acmecorp.com\",\n    \"admin_password\": \"password123\",\n    \"admin_password_confirmation\": \"password123\",\n    \"modules\": [\"accounting\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/register-company",
+              "host": ["{{base_url}}"],
+              "path": ["register-company"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Company Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@acmecorp.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Super Admin",
+      "description": "Super Admin endpoints for managing companies and modules.\nRequires super_admin role.",
+      "item": [
+        {
+          "name": "List All Companies",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/companies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Company",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/companies/{{company_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies", "{{company_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Company (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"company_name\": \"New Company\",\n    \"admin_name\": \"Admin User\",\n    \"admin_email\": \"admin@newcompany.com\",\n    \"admin_password\": \"password123\",\n    \"admin_password_confirmation\": \"password123\",\n    \"modules\": [\"accounting\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/companies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Company",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/my-company",
+              "host": ["{{base_url}}"],
+              "path": ["api", "my-company"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Available Modules",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/modules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "modules"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Module Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"company_id\": 1,\n    \"module_key\": \"accounting\",\n    \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/modules/toggle",
+              "host": ["{{base_url}}"],
+              "path": ["api", "modules", "toggle"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Module Access Control",
+      "description": "Endpoints for checking module activation status.\nDemonstrates the middleware-based access control system.\n\nHow it works:\n- Each company can have modules activated/deactivated\n- The module.access middleware checks if the user company has the required module active\n- Super admins bypass module checks",
+      "item": [
+        {
+          "name": "Get My Active Modules",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/my-modules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "my-modules"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Module Access - Accounting",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/check-module/accounting",
+              "host": ["{{base_url}}"],
+              "path": ["api", "check-module", "accounting"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Module Access - HR",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/check-module/hr",
+              "host": ["{{base_url}}"],
+              "path": ["api", "check-module", "hr"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Module Access - Inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/check-module/inventory",
+              "host": ["{{base_url}}"],
+              "path": ["api", "check-module", "inventory"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Users Management",
+      "description": "User CRUD operations.\n- Super admins see all users across all companies\n- Regular admins see only their company users\n- Authorization checks prevent cross-company access",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/core/users",
+              "host": ["{{base_url}}"],
+              "path": ["core", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/core/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["core", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"New User\",\n    \"email\": \"newuser@company.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"role\": \"user\",\n    \"company_id\": {{company_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/core/users",
+              "host": ["{{base_url}}"],
+              "path": ["core", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated User Name\",\n    \"email\": \"updated@company.com\",\n    \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/core/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["core", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/core/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["core", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Accounting Module",
+      "description": "Full double-entry accounting module.\n\nKey features:\n- Chart of Accounts management\n- Journal entries with Debit = Credit validation\n- Invoices with automatic journal entry generation (on status sent)\n- Payments with automatic journal entry generation\n- Trial Balance, Income Statement, Balance Sheet reports\n\nAccess requires: auth + accounting module active for company",
+      "item": [
+        {
+          "name": "Accounts",
+          "item": [
+            {
+              "name": "Get All Accounts",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/accounts",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "accounts"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Account",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"code\": \"1001\",\n    \"name\": \"Cash\",\n    \"type\": \"Asset\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/accounts",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "accounts"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Account Ledger",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/accounts/{{account_id}}/ledger?start_date=2026-01-01&end_date=2026-12-31",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "accounts", "{{account_id}}", "ledger"],
+                  "query": [
+                    { "key": "start_date", "value": "2026-01-01" },
+                    { "key": "end_date", "value": "2026-12-31" }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Journal Entries",
+          "description": "Double-entry journal entries.\nValidation: Total Debits MUST equal Total Credits (balanced entry).\nEach line must have either debit OR credit, not both.",
+          "item": [
+            {
+              "name": "Get All Journal Entries",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/journal-entries",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "journal-entries"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Single Journal Entry (with balance validation)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/journal-entries/{{entry_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "journal-entries", "{{entry_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Journal Entry (Debit = Credit)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"date\": \"2026-02-06\",\n    \"description\": \"Office supplies purchase\",\n    \"reference_number\": \"JE-001\",\n    \"lines\": [\n        {\n            \"account_id\": 1,\n            \"debit\": 1000.00,\n            \"credit\": 0\n        },\n        {\n            \"account_id\": 2,\n            \"debit\": 0,\n            \"credit\": 1000.00\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/journal-entries",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "journal-entries"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Unbalanced Entry (Should Fail - Debit != Credit)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"date\": \"2026-02-06\",\n    \"description\": \"This should fail - unbalanced\",\n    \"reference_number\": \"JE-FAIL\",\n    \"lines\": [\n        {\n            \"account_id\": 1,\n            \"debit\": 1000.00,\n            \"credit\": 0\n        },\n        {\n            \"account_id\": 2,\n            \"debit\": 0,\n            \"credit\": 500.00\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/journal-entries",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "journal-entries"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Invoices (Auto Journal Entry)",
+          "description": "Invoice management.\n\nAutomatic journal entry generation:\n- When invoice status = sent, an observer automatically creates:\n  - Debit: Accounts Receivable (total amount)\n  - Credit: Revenue (total amount)\n\nStatuses: draft, sent, paid, overdue, cancelled",
+          "item": [
+            {
+              "name": "Get All Invoices",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/invoices",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "invoices"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Single Invoice (with journal entry and payments)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/invoices/{{invoice_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "invoices", "{{invoice_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Invoice (draft - no journal entry)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"client_name\": \"Draft Client\",\n    \"total\": 2000.00,\n    \"status\": \"draft\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/invoices",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "invoices"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Invoice (sent - triggers journal entry)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"client_name\": \"ABC Client\",\n    \"total\": 5000.00,\n    \"status\": \"sent\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/invoices",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "invoices"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Invoice Status (draft to sent triggers journal entry)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"sent\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/invoices/{{invoice_id}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "invoices", "{{invoice_id}}", "status"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Payments (Auto Journal Entry)",
+          "description": "Payment management.\n\nAutomatic journal entry generation on every payment:\n- Debit: Cash/Bank (payment amount)\n- Credit: Accounts Receivable (payment amount)\n\nValidation: Payment amount cannot exceed invoice total.",
+          "item": [
+            {
+              "name": "Get All Payments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/payments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "payments"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Payment (triggers journal entry)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"invoice_id\": {{invoice_id}},\n    \"amount\": 500.00,\n    \"payment_date\": \"2026-02-06\",\n    \"payment_method\": \"bank_transfer\",\n    \"reference_number\": \"PYMT-001\",\n    \"notes\": \"Partial payment\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/payments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "payments"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Reports",
+          "description": "Financial reports:\n- Trial Balance: Lists all accounts with debit/credit totals\n- Income Statement: Revenue - Expenses = Net Income\n- Balance Sheet: Assets = Liabilities + Equity",
+          "item": [
+            {
+              "name": "Trial Balance",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/trial-balance?start_date=2026-01-01&end_date=2026-12-31",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "trial-balance"],
+                  "query": [
+                    { "key": "start_date", "value": "2026-01-01" },
+                    { "key": "end_date", "value": "2026-12-31" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Trial Balance (Grouped by Type)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/trial-balance?start_date=2026-01-01&end_date=2026-12-31&grouped=true",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "trial-balance"],
+                  "query": [
+                    { "key": "start_date", "value": "2026-01-01" },
+                    { "key": "end_date", "value": "2026-12-31" },
+                    { "key": "grouped", "value": "true" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Income Statement",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/income-statement?start_date=2026-01-01&end_date=2026-12-31",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "income-statement"],
+                  "query": [
+                    { "key": "start_date", "value": "2026-01-01" },
+                    { "key": "end_date", "value": "2026-12-31" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Balance Sheet",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Accept", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/accounting/balance-sheet?as_of_date=2026-12-31",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "accounting", "balance-sheet"],
+                  "query": [
+                    { "key": "as_of_date", "value": "2026-12-31" }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. HR Module (Planned)",
+      "description": "Human Resources module - planned for future development.\nRequires hr module to be active for the company.\n\nPlanned features:\n- Employee management\n- Department management\n- Attendance tracking\n- Leave management\n- Payroll (integrates with Accounting)",
+      "item": [
+        {
+          "name": "HR Module Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/hr/info",
+              "host": ["{{base_url}}"],
+              "path": ["api", "hr", "info"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Inventory Module (Planned)",
+      "description": "Inventory management module - planned for future development.\nRequires inventory module to be active for the company.\n\nPlanned features:\n- Product management\n- Warehouse management\n- Stock movements\n- Purchase orders (integrates with Accounting)",
+      "item": [
+        {
+          "name": "Inventory Module Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/info",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "info"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Authentication token (set after login)"
+    },
+    {
+      "key": "company_id",
+      "value": "1",
+      "description": "Company ID for operations"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "description": "User ID for user operations"
+    },
+    {
+      "key": "account_id",
+      "value": "1",
+      "description": "Account ID for ledger"
+    },
+    {
+      "key": "entry_id",
+      "value": "1",
+      "description": "Journal Entry ID"
+    },
+    {
+      "key": "invoice_id",
+      "value": "1",
+      "description": "Invoice ID"
+    }
+  ]
+}

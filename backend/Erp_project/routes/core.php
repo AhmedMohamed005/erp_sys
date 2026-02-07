@@ -13,7 +13,7 @@ use App\Http\Controllers\Core\UserController;
 Route::post('/register-company', [CompanyRegistrationController::class, 'register'])->name('company.register');
 
 // Protected routes
-Route::middleware(['auth'])->prefix('core')->name('core.')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('core')->name('core.')->group(function () {
     
     // Company management (super admin only)
     Route::middleware(['can:super-admin'])->prefix('companies')->name('companies.')->group(function () {
@@ -22,6 +22,7 @@ Route::middleware(['auth'])->prefix('core')->name('core.')->group(function () {
     });
     
     // Users management (accessible to admins and super admins)
+    
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index'); // GET /core/users
         Route::get('/{id}', [UserController::class, 'show'])->name('show'); // GET /core/users/{id}
