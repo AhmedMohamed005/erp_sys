@@ -191,17 +191,32 @@ The system enforces **three distinct access tiers**, each with clearly defined b
 - **Status lifecycle:** `Draft` → `Sent` → `Paid` → `Overdue`
 - Automatic total calculation
 - Client name and reference tracking
+- Invoices automatically generate accounting journal entries:
+  - Debit: Accounts Receivable
+  - Credit: Revenue
+- Each invoice is linked to its originating journal entry for auditability
 
 ### 7.4 Payments
 - Payment recording linked to specific invoices
 - **Multiple payment methods:** Cash, Bank Transfer, Check, Online Payment
 - Payment reference numbers for bank reconciliation
 - Notes field for additional context
+- Payments automatically generate accounting journal entries:
+  - Debit: Cash / Bank
+  - Credit: Accounts Receivable
+- Payments do not affect revenue, ensuring proper revenue recognition
+
+
 
 ### 7.5 Financial Reports *(Admin-only)*
 - Revenue and expense summaries per company
 - Filterable by custom date ranges
 - Dashboard-level analytics with key financial indicators
+
+### 7.6 Trial Balance
+- Automatically generated per company and date range
+- Aggregates debit and credit balances for all accounts
+- Ensures total debits always equal total credits
 
 ---
 
