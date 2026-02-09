@@ -52,8 +52,10 @@ class InvoiceObserver
             // Get accounts (these should be configured per company)
             $receivableAccount = Account::where('company_id', $invoice->company_id)
                 ->where('type', 'Asset')
-                ->where('code', 'LIKE', '%receivable%')
-                ->orWhere('name', 'LIKE', '%receivable%')
+                ->where(function($query) {
+                    $query->where('code', 'LIKE', '%receivable%')
+                          ->orWhere('name', 'LIKE', '%receivable%');
+                })
                 ->first();
 
             $revenueAccount = Account::where('company_id', $invoice->company_id)

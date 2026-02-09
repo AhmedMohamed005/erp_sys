@@ -772,14 +772,18 @@ const UserAccountingModule = () => {
     const assets = data.assets || { accounts: [], total: 0 };
     const liabilities = data.liabilities || { accounts: [], total: 0 };
     const equity = data.equity || { accounts: [], total: 0 };
+    const totals = data.totals || {};
+    const incomeStatementSummary = data.income_statement_summary || null;
     const assetAccounts = assets.accounts || assets.items || (Array.isArray(assets) ? assets : []);
     const liabilityAccounts = liabilities.accounts || liabilities.items || (Array.isArray(liabilities) ? liabilities : []);
     const equityAccounts = equity.accounts || equity.items || (Array.isArray(equity) ? equity : []);
-    const totalAssets = parseFloat(assets.total || 0) || assetAccounts.reduce((s, a) => s + (parseFloat(a.balance || a.total || a.amount) || 0), 0);
-    const totalLiabilities = parseFloat(liabilities.total || 0) || liabilityAccounts.reduce((s, a) => s + (parseFloat(a.balance || a.total || a.amount) || 0), 0);
-    const totalEquity = parseFloat(equity.total || 0) || equityAccounts.reduce((s, a) => s + (parseFloat(a.balance || a.total || a.amount) || 0), 0);
-    const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
-    const isBalancedSheet = Math.abs(totalAssets - totalLiabilitiesAndEquity) < 0.01;
+    const totalAssets = parseFloat(totals.total_assets || assets.total || 0) || assetAccounts.reduce((s, a) => s + (parseFloat(a.balance || a.total || a.amount) || 0), 0);
+    const totalLiabilities = parseFloat(totals.total_liabilities || liabilities.total || 0) || liabilityAccounts.reduce((s, a) => s + (parseFloat(a.balance || a.total || a.amount) || 0), 0);
+    const totalEquity = parseFloat(totals.total_equity || equity.total || 0) || equityAccounts.reduce((s, a) => s + (parseFloat(a.balance || a.total || a.amount) || 0), 0);
+    const totalEquityAccounts = totals.total_equity_accounts != null ? parseFloat(totals.total_equity_accounts) : null;
+    const netIncome = totals.net_income != null ? parseFloat(totals.net_income) : null;
+    const totalLiabilitiesAndEquity = parseFloat(totals.liabilities_plus_equity || 0) || (totalLiabilities + totalEquity);
+    const isBalancedSheet = totals.is_balanced != null ? totals.is_balanced : Math.abs(totalAssets - totalLiabilitiesAndEquity) < 0.01;
 
     const renderSection = (title, accountsList, total, colorScheme) => {
       const colors = {
@@ -805,17 +809,24 @@ const UserAccountingModule = () => {
                 </tr>
               </thead>
               <tbody>
-                {accountsList.length > 0 ? accountsList.map((acc, i) => (
-                  <tr key={i} className={`border-b ${c.border.replace('border-', 'border-')}/50 hover:bg-white/50`}>
-                    <td className="py-3 px-6 text-sm text-gray-800">
-                      <span className="text-gray-400 font-mono mr-2">{acc.code || acc.account_code || ''}</span>
-                      {acc.name || acc.account_name}
-                    </td>
-                    <td className="py-3 px-6 text-sm text-right font-mono font-semibold text-gray-800">
-                      {formatCurrency(acc.balance || acc.total || acc.amount || 0)}
-                    </td>
-                  </tr>
-                )) : (
+                {accountsList.length > 0 ? accountsList.map((acc, i) => {
+                  const isRetainedEarnings = acc.account_id === null && acc.code === 'RE';
+                  return (
+                    <tr key={i} className={`border-b ${c.border.replace('border-', 'border-')}/50 hover:bg-white/50 ${isRetainedEarnings ? 'bg-yellow-50/60' : ''}`}>
+                      <td className="py-3 px-6 text-sm text-gray-800">
+                        <span className="text-gray-400 font-mono mr-2">{acc.code || acc.account_code || ''}</span>
+                        {isRetainedEarnings ? (
+                          <span className="italic text-purple-700 font-medium">{acc.name || acc.account_name}</span>
+                        ) : (
+                          acc.name || acc.account_name
+                        )}
+                      </td>
+                      <td className={`py-3 px-6 text-sm text-right font-mono font-semibold ${isRetainedEarnings ? 'text-purple-700' : 'text-gray-800'}`}>
+                        {formatCurrency(acc.balance || acc.total || acc.amount || 0)}
+                      </td>
+                    </tr>
+                  );
+                }) : (
                   <tr><td colSpan="2" className="py-4 px-6 text-sm text-gray-400 text-center italic">No entries</td></tr>
                 )}
               </tbody>
@@ -862,6 +873,59 @@ const UserAccountingModule = () => {
 
           {/* Equity */}
           {renderSection('Equity', equityAccounts, totalEquity, 'purple')}
+
+          {/* Equity Breakdown */}
+          {(totalEquityAccounts != null || netIncome != null) && (
+            <div className="bg-purple-50 rounded-xl p-5 border border-purple-200">
+              <h4 className="text-sm font-bold text-purple-700 uppercase tracking-wider mb-3">Equity Breakdown</h4>
+              <div className="space-y-2 text-sm">
+                {totalEquityAccounts != null && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Equity Accounts</span>
+                    <span className="font-mono font-semibold text-gray-800">{formatCurrency(totalEquityAccounts)}</span>
+                  </div>
+                )}
+                {netIncome != null && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Net Income (Retained Earnings)</span>
+                    <span className={`font-mono font-semibold ${netIncome >= 0 ? 'text-green-700' : 'text-red-700'}`}>{formatCurrency(netIncome)}</span>
+                  </div>
+                )}
+                <div className="border-t border-purple-200 pt-2 flex justify-between font-bold">
+                  <span className="text-purple-800">Total Equity</span>
+                  <span className="font-mono text-purple-800">{formatCurrency(totalEquity)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Income Statement Summary */}
+          {incomeStatementSummary && (
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <TrendingUp />
+                </div>
+                <h4 className="text-lg font-bold text-gray-900">Income Statement Summary</h4>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white rounded-lg p-4 border border-emerald-100">
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Total Revenue</p>
+                  <p className="text-xl font-bold text-emerald-700 font-mono mt-1">{formatCurrency(incomeStatementSummary.total_revenue || 0)}</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-red-100">
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Total Expenses</p>
+                  <p className="text-xl font-bold text-red-600 font-mono mt-1">{formatCurrency(incomeStatementSummary.total_expenses || 0)}</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-blue-100">
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Net Income</p>
+                  <p className={`text-xl font-bold font-mono mt-1 ${(incomeStatementSummary.net_income || 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                    {formatCurrency(incomeStatementSummary.net_income || 0)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Accounting Equation */}
           <div className="bg-gray-900 rounded-xl p-6 text-white">

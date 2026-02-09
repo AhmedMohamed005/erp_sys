@@ -419,7 +419,6 @@ class AccountingApiController extends Controller
             ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
             ->where('journal_entries.company_id', $companyId)
             ->where('journal_entries.date', '<=', $asOfDate)
-            ->whereIn('accounts.type', ['Asset', 'Liability', 'Equity'])
             ->select(
                 'accounts.id as account_id',
                 'accounts.code',
@@ -445,24 +444,56 @@ class AccountingApiController extends Controller
             ];
         };
 
+        // --- Balance Sheet accounts ---
         $assets = $results->where('type', 'Asset')->map($mapAccount)->values();
         $liabilities = $results->where('type', 'Liability')->map($mapAccount)->values();
-        $equity = $results->where('type', 'Equity')->map($mapAccount)->values();
+        $equityAccounts = $results->where('type', 'Equity')->map($mapAccount)->values();
+
+        // --- Auto-Compute Net Income from temporary accounts ---
+        $revenueItems = $results->where('type', 'Revenue');
+        $expenseItems = $results->where('type', 'Expense');
+
+        $totalRevenue = $revenueItems->sum(function ($item) {
+            return (float) $item->total_credit - (float) $item->total_debit;
+        });
+
+        $totalExpenses = $expenseItems->sum(function ($item) {
+            return (float) $item->total_debit - (float) $item->total_credit;
+        });
+
+        $netIncome = $totalRevenue - $totalExpenses;
+
+        // --- Inject Retained Earnings (Net Income) into Equity section ---
+        $equityWithRetainedEarnings = $equityAccounts->toArray();
+        $equityWithRetainedEarnings[] = [
+            'account_id' => null,
+            'code' => 'RE',
+            'name' => 'Retained Earnings (Net Income)',
+            'balance' => round($netIncome, 2),
+        ];
 
         $totalAssets = $assets->sum('balance');
         $totalLiabilities = $liabilities->sum('balance');
-        $totalEquity = $equity->sum('balance');
+        $totalEquityAccounts = $equityAccounts->sum('balance');
+        $totalEquity = round($totalEquityAccounts + $netIncome, 2);
 
         return response()->json([
             'assets' => $assets,
             'liabilities' => $liabilities,
-            'equity' => $equity,
+            'equity' => $equityWithRetainedEarnings,
             'totals' => [
-                'total_assets' => $totalAssets,
-                'total_liabilities' => $totalLiabilities,
+                'total_assets' => round($totalAssets, 2),
+                'total_liabilities' => round($totalLiabilities, 2),
+                'total_equity_accounts' => round($totalEquityAccounts, 2),
+                'net_income' => round($netIncome, 2),
                 'total_equity' => $totalEquity,
-                'liabilities_plus_equity' => $totalLiabilities + $totalEquity,
+                'liabilities_plus_equity' => round($totalLiabilities + $totalEquity, 2),
                 'is_balanced' => round($totalAssets, 2) === round($totalLiabilities + $totalEquity, 2),
+            ],
+            'income_statement_summary' => [
+                'total_revenue' => round($totalRevenue, 2),
+                'total_expenses' => round($totalExpenses, 2),
+                'net_income' => round($netIncome, 2),
             ],
             'as_of_date' => $asOfDate,
         ]);
