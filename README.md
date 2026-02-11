@@ -284,21 +284,21 @@ The system enforces **three distinct access tiers**, each with clearly defined b
          │   Assignment   │  │   Analytics  │     │
          │                │  │              │     │
          └─► User         │  └─► Accounting─┤     │
-             Management   │       Module    │     │
-                          │       │         │     │
-                          │  ┌────┴────┐    │     │
-                          │  │         │    │     │
-                          │  ▼         ▼    ▼     ▼
-                          │  ┌─────────────────────────┐
-                          │  │    Accounting Module     │
-                          │  │  ─────────────────────   │
-                          │  │  • Chart of Accounts     │
-                          │  │  • Journal Entries       │
-                          │  │  • Invoices              │
-                          │  │  • Payments              │
-                          │  └─────────────────────────┘
-                          │
-                          └──────────────────────────────
+         |   Management   │  |    Module    │     │
+         ─────────────────   │───────────── │     │
+                                      ┴     │     │
+                                      │     │     │
+                                      ▼     ▼     ▼
+                             ┌─────────────────────────┐
+                             │    Accounting Module     │
+                             │  ─────────────────────   │
+                             │  • Chart of Accounts     │
+                             │  • Journal Entries       │
+                             │  • Invoices              │
+                             │  • Payments              │
+                             └─────────────────────────┘
+                          
+                          
 ```
 
 ---
